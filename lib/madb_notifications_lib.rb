@@ -7,7 +7,7 @@
 #      ActiveRecord::Base.observers = [ :madb_instance_observer ] 
 #    end
 
-class Entity < ActiveRecord::Base
+Entity.class_eval do
   def user_subscribed_to_creation?(user_id)
     NotificationSubscription.find(:first, :conditions => [ "source_filter = ? AND event = ? and source_type = ? and destination_type = ? and destination = ?",  {:entity_id => self.id}.to_yaml , "after_create", "Instance", "user", user_id.to_s  ])
   end
@@ -30,19 +30,45 @@ class Entity < ActiveRecord::Base
       n.destroy
     end
   end
+  def subscriptions_to_creation
+    NotificationSubscription.find(:all, :conditions => [ "source_filter = ? AND event = ? and source_type = ? and destination_type = ?",  {:entity_id => self.id}.to_yaml , "after_create", "Instance", "user"  ])
+  end
 end
 
 
 AppConfig.plugins.push( {:name => :madb_notifications, :entities_list_top_buttons => "madb_notifications/entities/list"  } )
 
-
-Instance.extend ArEvents
-class InstanceListener
-  def self.trigger(event, i)
-    puts "#{event} instance with id #{i.id}"
+class MadbSmtpNotification < Struct.new(:id, :instance)
+  def perform
+    @subscription = NotificationSubscription.find(id)
+    deliver_method_name = "deliver_"+@subscription.event+"_"+@subscription.source_type.downcase
+    addresses.each do |address|
+      MadbSmtpNotifier.send(deliver_method_name,address, @subscription, instance)
+    end
+  end
+  def addresses
+    case @subscription.destination_type
+    when "user"
+      u = User.find(@subscription.destination)
+      return [ u.email ]
+    end
   end
 end
-Instance.add_ar_event_listener(:after_create, InstanceListener)
+
+Instance.extend ArEvents
+class InstanceCreationListener
+  def self.trigger(event, i)
+    puts "#{event} instance with id #{i.id}"
+    i.entity.subscriptions_to_creation.each do |notification|
+      case notification.protocol
+      when "smtp"
+        puts "enqueing norification #{notification.id} for instans #{i.id}"
+        Delayed::Job.enqueue( MadbSmtpNotification.new(notification.id, i) )
+      end
+    end
+  end
+end
+Instance.add_ar_event_listener(:after_create, InstanceCreationListener)
 #Instance.add_ar_event_listener(:after_destroy, InstanceListener)
 
 #FileAttachment.send(:include, ArEvents)

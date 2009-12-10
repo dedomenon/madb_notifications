@@ -1,0 +1,2 @@
+A new entry has been created in the table <%= @entity.name %>.
+You can view it here: <%= url_for( :host => AppConfig.app_host, :controller => "entities", :action => "view", :id => @instance.id  )%>
