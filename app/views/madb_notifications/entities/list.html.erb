@@ -4,14 +4,14 @@
 
 
 
-<div><span><input type="checkbox" <%= @entity.user_subscribed_to_creation?(current_user)  ? %{CHECKED=CHECKED} : "" %>
+<div><span><input type="checkbox" <%= @entity.user_subscribed_to_creation?(current_user.id)  ? %{CHECKED=CHECKED} : "" %>
       onclick="new Ajax.Request(
       '<%= url_for(:controller => "/madb_notifications/notification_subscriptions", :action => 'toggle_creation_notification')%>',
       {  postBody: 'id='+<%=@entity.id%>+'&value='+this.checked
       ,onSuccess: new Effect.Highlight(this.parentNode)
       }
       );"
-      name="cration_notification" /><%= t("madb_notifications.entities.notify_me_when_entity_instance_is_created") %> </span></div>
+      name="creation_notification" /><%= t("madb_notifications.entities.notify_me_when_entity_instance_is_created") %> </span></div>
 
 <%= link_to_function t("madb_done"), "$('notification_subscriptions_div').style.display='none';"%>
 
