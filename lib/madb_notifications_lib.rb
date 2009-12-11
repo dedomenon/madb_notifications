@@ -1,17 +1,10 @@
-# MadbNotifications
-# notes: wanted to put the observer in a submodule, but caused troubles adding the observer
-# Passing MadbInstanceObserver.instance didnt work
-#    if ActiveRecord::Base.observers
-#      ActiveRecord::Base.observers += [ :madb_instance_observer ] 
-#    else
-#      ActiveRecord::Base.observers = [ :madb_instance_observer ] 
-#    end
-
 if AppConfig.send_notifications==true
+# check prerequisites
   raise "You need to add the app_host in your settings to use the notifications plugin" unless AppConfig.app_host
   raise "This plugin depends on DelayedJob, please install it" unless Delayed::Job
 
 
+#augment Entity class to enable the subscription to event notifications
   Entity.class_eval do
     def user_subscribed_to_creation?(user_id)
       NotificationSubscription.find(:first, :conditions => [ "source_filter = ? AND event = ? and source_type = ? and destination_type = ? and destination = ?",  {:entity_id => self.id}.to_yaml , "after_create", "Instance", "user", user_id.to_s  ])
@@ -41,8 +34,11 @@ if AppConfig.send_notifications==true
   end
 
 
+#add plugin to the AppConfig with its view hook.
   AppConfig.plugins.push( {:name => :madb_notifications, :entities_list_top_buttons => "madb_notifications/entities/list"  } )
 
+#This is the Smtp notification. 
+#LAter it might be wize to put it in another file or module.
   class MadbSmtpNotification < Struct.new(:id, :instance)
     def perform
       @subscription = NotificationSubscription.find(id)
@@ -60,7 +56,10 @@ if AppConfig.send_notifications==true
     end
   end
 
+#Add the ArEvents code to Instance
   Instance.extend ArEvents
+
+#Crete the listener
   class InstanceCreationListener
     def self.trigger(event, i)
       puts "#{event} instance with id #{i.id}"
@@ -73,17 +72,8 @@ if AppConfig.send_notifications==true
       end
     end
   end
+
+#and add the listener to the :after_create Instance listeners
   Instance.add_ar_event_listener(:after_create, InstanceCreationListener)
-  #Instance.add_ar_event_listener(:after_destroy, InstanceListener)
-  
-  #FileAttachment.send(:include, ArEvents)
-  #class FileAttachmentListener
-  #  def self.trigger(event, i)
-  #    puts "#{event} detail_value with id #{i.id}"
-  #  end
-  #end
-  #
-  #FileAttachment.add_ar_event_listener(:after_save, FileAttachmentListener)
-  #FileAttachment.add_ar_event_listener(:after_destroy, FileAttachmentListener)
-  #FileAttachment.add_ar_event_listener(:after_create, FileAttachmentListener)
+
 end

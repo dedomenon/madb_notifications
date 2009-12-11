@@ -1,13 +1,10 @@
 MadbNotifications
 =================
 
-Introduction goes here.
+This plugin add notifications of database actions.  Currently, there is one
+notification implemented: a user can request to receive a mail when a new entry
+is added to a table.
 
 
-Example
-=======
 
-Example goes here.
-
-
-Copyright (c) 2009 [name of plugin creator], released under the MIT license
+Copyright (c) 2009 Raphaël Bauduin, released under the AGPLv3 license
