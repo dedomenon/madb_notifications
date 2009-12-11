@@ -62,7 +62,6 @@ if AppConfig.send_notifications==true
 #Crete the listener
   class InstanceCreationListener
     def self.trigger(event, i)
-      puts "#{event} instance with id #{i.id}"
       i.entity.subscriptions_to_creation.each do |notification|
         case notification.protocol
         when "smtp"
