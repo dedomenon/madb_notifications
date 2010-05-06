@@ -1,0 +1,6 @@
+fr:
+  madb_notifications:
+    entities:
+      update_subscriptions: "Notifications"
+      notify_me_when_entity_instance_is_created: "Me notifier lors de la création d'une entrée"
+
